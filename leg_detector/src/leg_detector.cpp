@@ -33,6 +33,7 @@
 *********************************************************************/
 #include <ros/ros.h>
 
+#include <leg_detector/LegDetectorConfig.h>
 #include <leg_detector/laser_processor.h>
 #include <leg_detector/calc_leg_features.h>
 
@@ -52,7 +53,6 @@
 #include <people_tracking_filter/rgb.h>
 #include <visualization_msgs/Marker.h>
 #include <dynamic_reconfigure/server.h>
-#include <leg_detector/LegDetectorConfig.h>
 
 #include <algorithm>
 
