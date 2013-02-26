@@ -1,0 +1,20 @@
+<package>
+  <description brief="social_costmap_plugin">
+
+     social_costmap_plugin
+
+  </description>
+  <author>David!!</author>
+  <license>BSD</license>
+  <url>http://ros.org/wiki/social_costmap_plugin</url>
+  <depend package="pluginlib"/>
+  <depend package="roscpp"/>
+  <depend package="costmap_2d"/>
+  <depend package="people_velocity_tracker"/>
+  <depend package="dynamic_reconfigure"/>
+<export>
+  <costmap_2d plugin="${prefix}/costmap_plugins.xml" />
+</export>
+</package>
+
+

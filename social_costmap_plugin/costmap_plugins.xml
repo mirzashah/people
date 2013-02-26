@@ -1,0 +1,6 @@
+<library path="lib/libsocial_costmap_plugin">
+  <class type="social_costmap_plugin::SocialCostmapPlugin" base_class_type="costmap_2d::CostmapPluginROS">
+    <description>Uses people information to change the costmap</description>
+  </class>
+</library>
+
