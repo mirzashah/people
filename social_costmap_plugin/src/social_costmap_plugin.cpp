@@ -118,6 +118,7 @@ namespace social_costmap_plugin
     
     void SocialCostmapPlugin::update_costs(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j){
         boost::recursive_mutex::scoped_lock lock(lock_);
+        if(!enabled_) return;
 
         if( people_list_.size() == 0 )
           return;
@@ -212,6 +213,7 @@ namespace social_costmap_plugin
         covar_ = config.covariance;
         factor_ = config.factor;
         people_keep_time_ = ros::Duration(config.keep_time);
+        enabled_ = config.enabled;
     }
 
 
