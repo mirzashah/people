@@ -2,7 +2,7 @@
 #include <math.h>
 #include <angles/angles.h>
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(social_costmap_plugin::SocialCostmapPlugin, costmap_2d::CostmapPluginROS)
+PLUGINLIB_EXPORT_CLASS(social_costmap_plugin::SocialLayer, costmap_2d::Layer)
 
 using costmap_2d::NO_INFORMATION;
 using costmap_2d::LETHAL_OBSTACLE;
@@ -26,7 +26,7 @@ double get_radius(double cutoff, double A, double var){
 
 namespace social_costmap_plugin
 {
-    void SocialCostmapPlugin::initialize(costmap_2d::LayeredCostmap* costmap, std::string name)
+    void SocialLayer::initialize(costmap_2d::LayeredCostmap* costmap, std::string name)
     {
         ros::NodeHandle nh("~/" + name), g_nh;
         layered_costmap_ = costmap;
@@ -34,14 +34,14 @@ namespace social_costmap_plugin
         current_ = true;
 
         server_ = new dynamic_reconfigure::Server<SocialCostmapConfig>(nh);
-        f_ = boost::bind(&SocialCostmapPlugin::configure, this, _1, _2);
+        f_ = boost::bind(&SocialLayer::configure, this, _1, _2);
         server_->setCallback(f_);
 
-        people_sub_ = nh.subscribe("/people", 1, &SocialCostmapPlugin::peopleCallback, this);
+        people_sub_ = nh.subscribe("/people", 1, &SocialLayer::peopleCallback, this);
     }
     
     
-    void SocialCostmapPlugin::peopleCallback(const people_velocity_tracker::PersonPositionAndVelocity& person) {
+    void SocialLayer::peopleCallback(const people_velocity_tracker::PersonPositionAndVelocity& person) {
         boost::recursive_mutex::scoped_lock lock(lock_);
         if(people_list_.size()>0 && (*people_list_.begin()).header.stamp!=person.header.stamp)
           people_list_.clear();
@@ -50,7 +50,7 @@ namespace social_costmap_plugin
       }
 
 
-    void SocialCostmapPlugin::update_bounds(double origin_x, double origin_y, double origin_z, double* min_x, double* min_y, double* max_x, double* max_y){
+    void SocialLayer::update_bounds(double origin_x, double origin_y, double origin_z, double* min_x, double* min_y, double* max_x, double* max_y){
         boost::recursive_mutex::scoped_lock lock(lock_);
         
         // clear old people
@@ -116,7 +116,7 @@ namespace social_costmap_plugin
         }
     }
     
-    void SocialCostmapPlugin::update_costs(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j){
+    void SocialLayer::update_costs(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j){
         boost::recursive_mutex::scoped_lock lock(lock_);
         if(!enabled_) return;
 
@@ -207,7 +207,7 @@ namespace social_costmap_plugin
         }
     }
 
-    void SocialCostmapPlugin::configure(SocialCostmapConfig &config, uint32_t level) {
+    void SocialLayer::configure(SocialCostmapConfig &config, uint32_t level) {
         cutoff_ = config.cutoff;
         amplitude_ = config.amplitude;
         covar_ = config.covariance;

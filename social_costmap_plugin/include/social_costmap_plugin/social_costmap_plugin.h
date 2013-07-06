@@ -1,7 +1,7 @@
 #ifndef SOCIAL_COSTMAP_PLUGIN_H_
 #define SOCIAL_COSTMAP_PLUGIN_H_
 #include <ros/ros.h>
-#include <costmap_2d/plugin_ros.h>
+#include <costmap_2d/layer.h>
 #include <costmap_2d/layered_costmap.h>
 #include <people_velocity_tracker/PersonPositionAndVelocity.h>
 #include <dynamic_reconfigure/server.h>
@@ -10,10 +10,10 @@
 
 namespace social_costmap_plugin
 {
-  class SocialCostmapPlugin : public costmap_2d::CostmapPluginROS
+  class SocialLayer : public costmap_2d::Layer
   {
     public:
-      SocialCostmapPlugin() { layered_costmap_ = NULL; }
+      SocialLayer() { layered_costmap_ = NULL; }
 
       virtual void initialize(costmap_2d::LayeredCostmap* costmap, std::string name);
       void update_bounds(double origin_x, double origin_y, double origin_yaw, double* min_x, double* min_y, double* max_x, double* max_y);
