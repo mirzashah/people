@@ -15,14 +15,11 @@ namespace social_costmap_plugin
     public:
       SocialLayer() { layered_costmap_ = NULL; }
 
-      virtual void initialize(costmap_2d::LayeredCostmap* costmap, std::string name);
-      void update_bounds(double origin_x, double origin_y, double origin_yaw, double* min_x, double* min_y, double* max_x, double* max_y);
-      void update_costs(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j);
+      virtual void onInitialize();
+      virtual void updateBounds(double origin_x, double origin_y, double origin_yaw, double* min_x, double* min_y, double* max_x, double* max_y);
+      virtual void updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j);
 
-      void activate() {}
-      void deactivate() {}    
       bool isDiscretized() { return false; }
-      void matchSize() {}
 
     private:
       void peopleCallback(const people_velocity_tracker::PersonPositionAndVelocity& person);

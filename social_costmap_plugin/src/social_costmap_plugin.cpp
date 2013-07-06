@@ -26,11 +26,9 @@ double get_radius(double cutoff, double A, double var){
 
 namespace social_costmap_plugin
 {
-    void SocialLayer::initialize(costmap_2d::LayeredCostmap* costmap, std::string name)
+    void SocialLayer::onInitialize()
     {
-        ros::NodeHandle nh("~/" + name), g_nh;
-        layered_costmap_ = costmap;
-        name_ = name;
+        ros::NodeHandle nh("~/" + name_), g_nh;
         current_ = true;
 
         server_ = new dynamic_reconfigure::Server<SocialCostmapConfig>(nh);
@@ -39,7 +37,6 @@ namespace social_costmap_plugin
 
         people_sub_ = nh.subscribe("/people", 1, &SocialLayer::peopleCallback, this);
     }
-    
     
     void SocialLayer::peopleCallback(const people_velocity_tracker::PersonPositionAndVelocity& person) {
         boost::recursive_mutex::scoped_lock lock(lock_);
@@ -50,7 +47,7 @@ namespace social_costmap_plugin
       }
 
 
-    void SocialLayer::update_bounds(double origin_x, double origin_y, double origin_z, double* min_x, double* min_y, double* max_x, double* max_y){
+    void SocialLayer::updateBounds(double origin_x, double origin_y, double origin_z, double* min_x, double* min_y, double* max_x, double* max_y){
         boost::recursive_mutex::scoped_lock lock(lock_);
         
         // clear old people
@@ -116,7 +113,7 @@ namespace social_costmap_plugin
         }
     }
     
-    void SocialLayer::update_costs(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j){
+    void SocialLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j){
         boost::recursive_mutex::scoped_lock lock(lock_);
         if(!enabled_) return;
 
