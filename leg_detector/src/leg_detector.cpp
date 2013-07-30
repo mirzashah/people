@@ -42,6 +42,7 @@
 #include <opencv/ml.h>
 
 #include <people_msgs/PositionMeasurement.h>
+#include <people_msgs/PositionMeasurementArray.h>
 #include <sensor_msgs/LaserScan.h>
 
 #include <tf/transform_listener.h>
@@ -290,8 +291,8 @@ public:
     nh_.param<bool>("use_seeds", use_seeds_, !true);
 
     // advertise topics
-    leg_measurements_pub_ = nh_.advertise<people_msgs::PositionMeasurement>("leg_tracker_measurements",0);
-    people_measurements_pub_ = nh_.advertise<people_msgs::PositionMeasurement>("people_tracker_measurements", 0);
+    leg_measurements_pub_ = nh_.advertise<people_msgs::PositionMeasurementArray>("leg_tracker_measurements",0);
+    people_measurements_pub_ = nh_.advertise<people_msgs::PositionMeasurementArray>("people_tracker_measurements", 0);
     markers_pub_ = nh_.advertise<visualization_msgs::Marker>("visualization_marker", 20);
 
     if(use_seeds_){
@@ -798,6 +799,8 @@ public:
 
     // Publish Data!
     int i = 0;
+    vector<people_msgs::PositionMeasurement> people;
+    vector<people_msgs::PositionMeasurement> legs;
 
     for (list<SavedFeature*>::iterator sf_iter = saved_features_.begin();
          sf_iter != saved_features_.end();
@@ -827,7 +830,7 @@ public:
         pos.covariance[7] = 0.0;
         pos.covariance[8] = 10000.0;
         pos.initialization = 0;
-        leg_measurements_pub_.publish(pos);
+	legs.push_back(pos);
 
       }
 
@@ -884,7 +887,7 @@ public:
             pos.covariance[7] = 0.0;
             pos.covariance[8] = 10000.0;
             pos.initialization = 0;
-            people_measurements_pub_.publish(pos);  
+            people.push_back(pos);  
           }
    
           if (publish_people_markers_){
@@ -908,6 +911,17 @@ public:
           }
         }
       }
+    }
+
+    people_msgs::PositionMeasurementArray array;
+    array.header.stamp = ros::Time::now();
+    if(publish_legs_){
+      array.people = legs;
+      leg_measurements_pub_.publish(array);
+    }
+    if(publish_people_){
+      array.people = people;
+      people_measurements_pub_.publish(array);
     }
   }
 };
