@@ -1,6 +1,0 @@
-<library path="lib/libsocial_costmap_plugin">
-  <class type="social_costmap_plugin::SocialLayer" base_class_type="costmap_2d::Layer">
-    <description>Uses people information to change the costmap</description>
-  </class>
-</library>
-
