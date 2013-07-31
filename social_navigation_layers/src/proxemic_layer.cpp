@@ -1,8 +1,8 @@
-#include <social_costmap_plugin/social_costmap_plugin.h>
+#include <social_navigation_layers/proxemic_layer.h>
 #include <math.h>
 #include <angles/angles.h>
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(social_costmap_plugin::SocialLayer, costmap_2d::Layer)
+PLUGINLIB_EXPORT_CLASS(social_navigation_layers::ProxemicLayer, costmap_2d::Layer)
 
 using costmap_2d::NO_INFORMATION;
 using costmap_2d::LETHAL_OBSTACLE;
@@ -24,54 +24,42 @@ double get_radius(double cutoff, double A, double var){
 }
 
 
-namespace social_costmap_plugin
+namespace social_navigation_layers
 {
-    void SocialLayer::onInitialize()
+    void ProxemicLayer::onInitialize()
     {
         ros::NodeHandle nh("~/" + name_), g_nh;
         current_ = true;
 
-        server_ = new dynamic_reconfigure::Server<SocialCostmapConfig>(nh);
-        f_ = boost::bind(&SocialLayer::configure, this, _1, _2);
+        server_ = new dynamic_reconfigure::Server<ProxemicLayerConfig>(nh);
+        f_ = boost::bind(&ProxemicLayer::configure, this, _1, _2);
         server_->setCallback(f_);
 
-        people_sub_ = nh.subscribe("/people", 1, &SocialLayer::peopleCallback, this);
+        people_sub_ = nh.subscribe("/people", 1, &ProxemicLayer::peopleCallback, this);
     }
     
-    void SocialLayer::peopleCallback(const people_velocity_tracker::PersonPositionAndVelocity& person) {
+    void ProxemicLayer::peopleCallback(const people_msgs::People& people) {
         boost::recursive_mutex::scoped_lock lock(lock_);
-        if(people_list_.size()>0 && (*people_list_.begin()).header.stamp!=person.header.stamp)
-          people_list_.clear();
-
-        people_list_.push_front(person);
+        people_list_ = people;
       }
 
 
-    void SocialLayer::updateBounds(double origin_x, double origin_y, double origin_z, double* min_x, double* min_y, double* max_x, double* max_y){
+    void ProxemicLayer::updateBounds(double origin_x, double origin_y, double origin_z, double* min_x, double* min_y, double* max_x, double* max_y){
         boost::recursive_mutex::scoped_lock lock(lock_);
         
-        // clear old people
-        ros::Duration time_diff = ros::Time::now() - (*people_list_.begin()).header.stamp;
-        if(time_diff > people_keep_time_){
-          people_list_.clear();
-          return;
-        }
-        
-        std::list<people_velocity_tracker::PersonPositionAndVelocity>::iterator p_it;
         std::string global_frame = layered_costmap_->getGlobalFrameID();
         transformed_people_.clear();
         
-        for(p_it = people_list_.begin(); p_it != people_list_.end(); ++p_it){
-            people_velocity_tracker::PersonPositionAndVelocity person = *p_it;
-            people_velocity_tracker::PersonPositionAndVelocity tpt;
+        for(unsigned int i=0; i<people_list_.people.size(); i++){
+            people_msgs::Person& person = people_list_.people[i];
+            people_msgs::Person tpt;
             geometry_msgs::PointStamped pt, opt;
             
-
             try{
               pt.point.x = person.position.x;
               pt.point.y = person.position.y;
               pt.point.z = person.position.z;
-              pt.header.frame_id = person.header.frame_id;
+              pt.header.frame_id = people_list_.header.frame_id;
               tf_.transformPoint(global_frame, pt, opt);
               tpt.position.x = opt.point.x;
               tpt.position.y = opt.point.y;
@@ -113,21 +101,21 @@ namespace social_costmap_plugin
         }
     }
     
-    void SocialLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j){
+    void ProxemicLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j){
         boost::recursive_mutex::scoped_lock lock(lock_);
         if(!enabled_) return;
 
-        if( people_list_.size() == 0 )
+        if( people_list_.people.size() == 0 )
           return;
         if( cutoff_ >= amplitude_)
             return;
         
-        std::list<people_velocity_tracker::PersonPositionAndVelocity>::iterator p_it;
+        std::list<people_msgs::Person>::iterator p_it;
         costmap_2d::Costmap2D* costmap = layered_costmap_->getCostmap();
         double res = costmap->getResolution();
         
         for(p_it = transformed_people_.begin(); p_it != transformed_people_.end(); ++p_it){
-            people_velocity_tracker::PersonPositionAndVelocity person = *p_it;
+            people_msgs::Person person = *p_it;
             double angle = atan2(person.velocity.y, person.velocity.x);
             double mag = sqrt(pow(person.velocity.x,2) + pow(person.velocity.y, 2));
             double factor = 1.0 + mag * factor_;
@@ -204,7 +192,7 @@ namespace social_costmap_plugin
         }
     }
 
-    void SocialLayer::configure(SocialCostmapConfig &config, uint32_t level) {
+    void ProxemicLayer::configure(ProxemicLayerConfig &config, uint32_t level) {
         cutoff_ = config.cutoff;
         amplitude_ = config.amplitude;
         covar_ = config.covariance;

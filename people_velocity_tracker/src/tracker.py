@@ -77,7 +77,7 @@ class PersonEstimate:
     def get_person(self):
         p = Person()
         p.name = self.id()
-        p.pos = self.pos.pos
+        p.position = self.pos.pos
         p.velocity = self.velocity()
         p.reliability = self.reliability
         return self.pos.header.frame_id, person
