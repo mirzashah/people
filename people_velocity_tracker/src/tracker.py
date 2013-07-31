@@ -78,13 +78,8 @@ class PersonEstimate:
         p = Person()
         p.name = self.id()
         p.pos = self.pos.pos
-        v = self.velocity()
-        mag = math.sqrt(v.x*v.x + v.y*v.y)
-        heading = math.atan2(v.y, v.x)
-        
-        p.valuenames += ['reliability', 'speed', 'heading']
-        p.values += [self.reliability, mag, heading]
-        
+        p.velocity = self.velocity()
+        p.reliability = self.reliability
         return self.pos.header.frame_id, person
 
 class VelocityTracker:
