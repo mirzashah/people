@@ -4,10 +4,9 @@ import roslib; roslib.load_manifest('people_velocity_tracker')
 import rospy, rosbag
 from geometry_msgs.msg import Point, Vector3
 import math
-from people_msgs.msg import PositionMeasurement
+from people_msgs.msg import PositionMeasurementArray, Person, People
 from easy_markers.generator import *
 from kalman_filter import Kalman
-from people_velocity_tracker.msg import PersonPositionAndVelocity
 
 def distance(leg1, leg2):
     return math.sqrt(math.pow(leg1.x-leg2.x,2) + 
@@ -36,7 +35,7 @@ gen.type = Marker.ARROW
 gen.ns = 'velocities'
 gen.lifetime = .5
 
-class Person:
+class PersonEstimate:
     def __init__(self, msg):
         self.pos = msg
         self.reliability = 0.1
@@ -76,39 +75,33 @@ class Person:
         pub.publish(m)
 
     def get_person(self):
-        p = leg_filter.msg.Person()
-        center = self.center()
-        p.position = Vector3(center.x, center.y, center.z)
-        p.velocity = self.velocity()
-        p.id = self.id
-        p.reliability = self.reliability
-        return p
-
-    def get_object(self):
-        pv = PersonPositionAndVelocity()
-        pv.header = self.pos.header
-        pv.position.x = self.pos.pos.x
-        pv.position.y = self.pos.pos.y
-        pv.position.z = self.pos.pos.z
-        pv.velocity = self.velocity()
-        pv.id = self.id()
-        pv.reliability = self.reliability        
-        return pv
+        p = Person()
+        p.name = self.id()
+        p.pos = self.pos.pos
+        v = self.velocity()
+        mag = math.sqrt(v.x*v.x + v.y*v.y)
+        heading = math.atan2(v.y, v.x)
+        
+        p.valuenames += ['reliability', 'speed', 'heading']
+        p.values += [self.reliability, mag, heading]
+        
+        return self.pos.header.frame_id, person
 
 class VelocityTracker:
     def __init__(self):
         self.people = {}
         self.TIMEOUT = rospy.Duration( rospy.get_param('~timeout',          1.0) )
-        self.sub  = rospy.Subscriber('/people_tracker_measurements', PositionMeasurement, self.pm_cb)
+        self.sub  = rospy.Subscriber('/people_tracker_measurements', PositionMeasurementArray, self.pm_cb)
         self.mpub = rospy.Publisher('/visualization_marker', Marker)
-        self.ppub = rospy.Publisher('/people', PersonPositionAndVelocity)
+        self.ppub = rospy.Publisher('/people', People)
 
     def pm_cb(self, msg):
-        if msg.object_id in self.people:
-            self.people[msg.object_id].update(msg)
-        else:
-            p = Person(msg)
-            self.people[msg.object_id] = p
+        for pm in msg:
+            if pm.object_id in self.people:
+                self.people[pm.object_id].update(pm)
+            else:
+                p = PersonEstimate(pm)
+                self.people[pm.object_id] = p
 
     def spin(self):
         rate = rospy.Rate(10)
@@ -123,9 +116,16 @@ class VelocityTracker:
 
     def publish(self):        
         gen.counter = 0
+        pl = People()
+        pl.header.frame_id = None
+        
         for p in self.people.values():
             p.publish_markers(self.mpub)
-            self.ppub.publish(p.get_object())
+            frame, person = p.getPerson()
+            pl.header.frame_id = frame
+            pl.people.append( person )
+            
+        self.ppub.publish(pl)
 
 rospy.init_node("people_velocity_tracker")
 vt = VelocityTracker()
