@@ -14,7 +14,6 @@
   <depend package="geometry_msgs"/>
   <depend package="tf"/>
   <depend package="bfl"/>
-  <depend package="bullet"/>
   <depend package="message_filters" />
   <depend package="people_msgs" />
   <depend package="sensor_msgs" />
