@@ -80,7 +80,7 @@ class PersonEstimate:
         p.position = self.pos.pos
         p.velocity = self.velocity()
         p.reliability = self.reliability
-        return self.pos.header.frame_id, person
+        return self.pos.header.frame_id, p
 
 class VelocityTracker:
     def __init__(self):
@@ -91,7 +91,7 @@ class VelocityTracker:
         self.ppub = rospy.Publisher('/people', People)
 
     def pm_cb(self, msg):
-        for pm in msg:
+        for pm in msg.people:
             if pm.object_id in self.people:
                 self.people[pm.object_id].update(pm)
             else:
@@ -116,7 +116,7 @@ class VelocityTracker:
         
         for p in self.people.values():
             p.publish_markers(self.mpub)
-            frame, person = p.getPerson()
+            frame, person = p.get_person()
             pl.header.frame_id = frame
             pl.people.append( person )
             
