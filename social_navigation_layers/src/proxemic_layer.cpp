@@ -28,76 +28,29 @@ namespace social_navigation_layers
 {
     void ProxemicLayer::onInitialize()
     {
+        SocialLayer::onInitialize();
         ros::NodeHandle nh("~/" + name_), g_nh;
-        current_ = true;
-
         server_ = new dynamic_reconfigure::Server<ProxemicLayerConfig>(nh);
         f_ = boost::bind(&ProxemicLayer::configure, this, _1, _2);
         server_->setCallback(f_);
-
-        people_sub_ = nh.subscribe("/people", 1, &ProxemicLayer::peopleCallback, this);
     }
     
-    void ProxemicLayer::peopleCallback(const people_msgs::People& people) {
-        boost::recursive_mutex::scoped_lock lock(lock_);
-        people_list_ = people;
-      }
-
-
-    void ProxemicLayer::updateBounds(double origin_x, double origin_y, double origin_z, double* min_x, double* min_y, double* max_x, double* max_y){
-        boost::recursive_mutex::scoped_lock lock(lock_);
+    void ProxemicLayer::updateBoundsFromPeople(double* min_x, double* min_y, double* max_x, double* max_y)
+    {
+        std::list<people_msgs::Person>::iterator p_it;
         
-        std::string global_frame = layered_costmap_->getGlobalFrameID();
-        transformed_people_.clear();
-        
-        for(unsigned int i=0; i<people_list_.people.size(); i++){
-            people_msgs::Person& person = people_list_.people[i];
-            people_msgs::Person tpt;
-            geometry_msgs::PointStamped pt, opt;
-            
-            try{
-              pt.point.x = person.position.x;
-              pt.point.y = person.position.y;
-              pt.point.z = person.position.z;
-              pt.header.frame_id = people_list_.header.frame_id;
-              tf_.transformPoint(global_frame, pt, opt);
-              tpt.position.x = opt.point.x;
-              tpt.position.y = opt.point.y;
-              tpt.position.z = opt.point.z;
-
-              pt.point.x += person.velocity.x;
-              pt.point.y += person.velocity.y;
-              pt.point.z += person.velocity.z;
-              tf_.transformPoint(global_frame, pt, opt);
+        for(p_it = transformed_people_.begin(); p_it != transformed_people_.end(); ++p_it){
+            people_msgs::Person person = *p_it;
+             
+            double mag = sqrt(pow(person.velocity.x,2) + pow(person.velocity.y, 2));
+            double factor = 1.0 + mag * factor_;
+            double point = get_radius(cutoff_, amplitude_, covar_ * factor );
               
-              tpt.velocity.x = tpt.position.x - opt.point.x;
-              tpt.velocity.y = tpt.position.y - opt.point.y;
-              tpt.velocity.z = tpt.position.z - opt.point.z;
+            *min_x = std::min(*min_x, person.position.x - point);
+            *min_y = std::min(*min_y, person.position.y - point);
+            *max_x = std::max(*max_x, person.position.x + point);
+            *max_y = std::max(*max_y, person.position.y + point);
               
-              transformed_people_.push_back(tpt);
-              
-              double mag = sqrt(pow(tpt.velocity.x,2) + pow(person.velocity.y, 2));
-              double factor = 1.0 + mag * factor_;
-              double point = get_radius(cutoff_, amplitude_, covar_ * factor );
-              
-              *min_x = std::min(*min_x, tpt.position.x - point);
-              *min_y = std::min(*min_y, tpt.position.y - point);
-              *max_x = std::max(*max_x, tpt.position.x + point);
-              *max_y = std::max(*max_y, tpt.position.y + point);
-              
-            }
-            catch(tf::LookupException& ex) {
-              ROS_ERROR("No Transform available Error: %s\n", ex.what());
-              continue;
-            }
-            catch(tf::ConnectivityException& ex) {
-              ROS_ERROR("Connectivity Error: %s\n", ex.what());
-              continue;
-            }
-            catch(tf::ExtrapolationException& ex) {
-              ROS_ERROR("Extrapolation Error: %s\n", ex.what());
-              continue;
-            }
         }
     }
     

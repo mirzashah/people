@@ -68,6 +68,6 @@ namespace social_navigation_layers
               continue;
             }
         }
-        updateBoundsFromPeople();
+        updateBoundsFromPeople(min_x, min_y, max_x, max_y);
     }
 };
