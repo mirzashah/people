@@ -10,5 +10,6 @@ include(${dynamic_reconfigure_PACKAGE_PATH}/cmake/cfgbuild.cmake)
 gencfg()
 
 rosbuild_add_library(social_layers 
+    src/social_layer.cpp
     src/proxemic_layer.cpp 
     src/passing_layer.cpp)
