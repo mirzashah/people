@@ -9,4 +9,6 @@ rosbuild_find_ros_package(dynamic_reconfigure)
 include(${dynamic_reconfigure_PACKAGE_PATH}/cmake/cfgbuild.cmake)
 gencfg()
 
-rosbuild_add_library(proxemic_layer src/proxemic_layer.cpp)
+rosbuild_add_library(social_layers 
+    src/proxemic_layer.cpp 
+    src/passing_layer.cpp)

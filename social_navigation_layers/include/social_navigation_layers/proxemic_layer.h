@@ -8,6 +8,10 @@
 #include <boost/thread.hpp>
 #include <social_navigation_layers/ProxemicLayerConfig.h>
 
+double gaussian(double x, double y, double x0, double y0, double A, double varx, double vary, double skew);
+double get_radius(double cutoff, double A, double var);
+
+
 namespace social_navigation_layers
 {
   class ProxemicLayer : public costmap_2d::Layer
@@ -21,7 +25,7 @@ namespace social_navigation_layers
 
       bool isDiscretized() { return false; }
 
-    private:
+    protected:
       void peopleCallback(const people_msgs::People& people);
       void configure(ProxemicLayerConfig &config, uint32_t level);
       ros::Subscriber people_sub_;
@@ -35,5 +39,7 @@ namespace social_navigation_layers
       dynamic_reconfigure::Server<ProxemicLayerConfig>::CallbackType f_;
   };
 };
+
+
 #endif
 
