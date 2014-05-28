@@ -21,9 +21,9 @@ class VelocityTracker:
             pv.position.z = .5
             pv.velocity.x = float(sys.argv[3])
             pv.velocity.y = float(sys.argv[4])
-            pv.id = 'asdf'
+            pv.name = 'asdf'
             pv.reliability = .90       
-            pl.people.appende(pv)
+            pl.people.append(pv)
             
             self.ppub.publish(pl)
             rate.sleep()
