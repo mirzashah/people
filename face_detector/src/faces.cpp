@@ -44,6 +44,11 @@
 
 namespace people {
 
+const double Faces::FACE_SIZE_MIN_M;
+const double Faces::FACE_SIZE_MAX_M;
+const double Faces::MAX_FACE_Z_M;
+const double Faces::FACE_SEP_DIST_M;
+
 Faces::Faces():
   list_(NULL),
   cam_model_(NULL) {
