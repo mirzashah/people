@@ -328,7 +328,12 @@ public:
     max_track_jump_m         = config.max_track_jump;
     max_meas_jump_m          = config.max_meas_jump;
     leg_pair_separation_m    = config.leg_pair_separation;
-    fixed_frame              = config.fixed_frame;
+    if(fixed_frame.compare(config.fixed_frame) != 0)
+    {
+      fixed_frame              = config.fixed_frame;
+      laser_notifier_.setTargetFrame(fixed_frame);
+      people_notifier_.setTargetFrame(fixed_frame);
+    }
 
     kal_p                    = config.kalman_p;
     kal_q                    = config.kalman_q;
