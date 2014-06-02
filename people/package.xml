@@ -1,0 +1,20 @@
+<package>
+
+  <name>people</name>
+  <version>0.0.0</version>
+  <description>
+  people detection stack
+  </description>
+  <author>Caroline Pantofaru</author>
+  <author>David Lu</author>
+  <maintainer email="davidlu@wustl.edu">David Lu</maintainer>
+  <license>BSD</license>
+  <url>http://ros.org/wiki/people</url>  
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <export>
+    <metapackage/>
+  </export>
+
+</package>
