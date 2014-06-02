@@ -1,40 +1,54 @@
-cmake_minimum_required(VERSION 2.4.6)
-include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
+cmake_minimum_required(VERSION 2.8.3)
+project(leg_detector)
 
-# Set the build type.  Options are:
-#  Coverage       : w/ debug symbols, w/o optimization, w/ code-coverage
-#  Debug          : w/ debug symbols, w/o optimization
-#  Release        : w/o debug symbols, w/ optimization
-#  RelWithDebInfo : w/ debug symbols, w/ optimization
-#  MinSizeRel     : w/o debug symbols, w/ optimization, stripped binaries
-#set(ROS_BUILD_TYPE RelWithDebInfo)
+# look for bfl (Bayesian Filtering Library)
+find_package(PkgConfig)
+pkg_check_modules(BFL REQUIRED orocos-bfl)
 
-rosbuild_init()
+include_directories(${BFL_INCLUDE_DIRS})
+link_directories(${BFL_LIBRARY_DIRS})
 
-#set the default path for built executables to the "bin" directory
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-#set the default path for built libraries to the "lib" directory
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+# Look for Bullet
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(BULLET bullet)
+include_directories(${BULLET_INCLUDE_DIRS})
 
-#uncomment if you have defined messages
-#rosbuild_genmsg()
-#uncomment if you have defined services
-#rosbuild_gensrv()
+## Find catkin macros and libraries
+find_package(catkin REQUIRED COMPONENTS
+  roscpp
+  std_msgs
+  geometry_msgs
+  std_srvs
+  sensor_msgs
+  laser_geometry
+  tf
+  visualization_msgs
+  people_msgs
+  people_tracking_filter
+  image_geometry
+  dynamic_reconfigure
+)
 
-#common commands for building c++ executables and libraries
-#rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
-#target_link_libraries(${PROJECT_NAME} another_library)
-#rosbuild_add_boost_directories()
-#rosbuild_link_boost(${PROJECT_NAME} thread)
-#rosbuild_add_executable(example examples/example.cpp)
-#target_link_libraries(example ${PROJECT_NAME})
+## dynamic reconfigure config
+generate_dynamic_reconfigure_options(
+  cfg/LegDetector.cfg
+)
 
-rosbuild_find_ros_package(dynamic_reconfigure)
-include(${dynamic_reconfigure_PACKAGE_PATH}/cmake/cfgbuild.cmake)
-gencfg()
+## Specify additional locations of header files
+include_directories(
+  include ${catkin_INCLUDE_DIRS}
+)
 
-rosbuild_add_executable(leg_detector 
-                       src/laser_processor.cpp
-                       src/leg_detector.cpp 
-                       src/calc_leg_features.cpp)
+## Declare a cpp executable
+add_executable(leg_detector 
+               src/laser_processor.cpp
+               src/leg_detector.cpp 
+               src/calc_leg_features.cpp)
 
+## Add cmake target dependencies of the executable/library
+add_dependencies(leg_detector people_msgs_gencpp ${${PROJECT_NAME}_EXPORTED_TARGETS})
+
+## Specify libraries to link a library or executable target against
+target_link_libraries(leg_detector
+   ${catkin_LIBRARIES} ${BFL_LIBRARIES} ${BULLET_LIBRARIES}
+)
