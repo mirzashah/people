@@ -1,15 +1,30 @@
-cmake_minimum_required(VERSION 2.4.6)
-include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
+cmake_minimum_required(VERSION 2.8.3)
+project(social_navigation_layers)
 
-rosbuild_init()
+## Find catkin macros and libraries
+find_package(catkin REQUIRED COMPONENTS
+  roscpp
+  costmap_2d
+  people_msgs
+  dynamic_reconfigure
+)
 
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+## dynamic reconfigure config
+generate_dynamic_reconfigure_options(
+  cfg/ProxemicLayer.cfg
+)
 
-rosbuild_find_ros_package(dynamic_reconfigure)
-include(${dynamic_reconfigure_PACKAGE_PATH}/cmake/cfgbuild.cmake)
-gencfg()
+## Specify additional locations of header files
+include_directories(
+  include ${catkin_INCLUDE_DIRS}
+)
 
-rosbuild_add_library(social_layers 
-    src/social_layer.cpp
-    src/proxemic_layer.cpp 
-    src/passing_layer.cpp)
+## add cpp library
+add_library(social_layers 
+            src/social_layer.cpp
+            src/proxemic_layer.cpp 
+            src/passing_layer.cpp
+)
+
+## Add cmake target dependencies of the executable/library
+add_dependencies(social_layers people_msgs_gencpp ${${PROJECT_NAME}_EXPORTED_TARGETS})
