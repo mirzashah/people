@@ -48,9 +48,10 @@ class PersonEstimate:
 
         ivel = subtract(self.pos.pos, last.pos)
         time = (self.pos.header.stamp - last.header.stamp).to_sec()
-        scale(ivel, 1.0/time)
+        if time != 0:
+           scale(ivel, 1.0/time)
             
-        self.k.update([ivel.x, ivel.y, ivel.z])
+           self.k.update([ivel.x, ivel.y, ivel.z])
 
     def age(self):
         return self.pos.header.stamp
