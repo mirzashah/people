@@ -4,8 +4,8 @@
   <description>
   people_velocity_tracker
   </description>
-  <author>David V. Lu!!</author>
-  <maintainer email="davidlu@wustl.edu">David V. Lu!!</maintainer>
+  <author email="davidvlu@gmail.com">David V. Lu!!</author>
+  <maintainer email="davidvlu@gmail.com">David V. Lu!!</maintainer>
   <license>BSD</license>
   <url>http://ros.org/wiki/people_velocity_tracker</url>  
 
