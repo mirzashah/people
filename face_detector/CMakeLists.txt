@@ -1,11 +1,10 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(face_detector)
 
-## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
   roscpp
-  std_msgs 
-  geometry_msgs 
+  std_msgs
+  geometry_msgs
   std_srvs
   cv_bridge
   stereo_msgs
@@ -16,66 +15,66 @@ find_package(catkin REQUIRED COMPONENTS
   people_msgs
   image_geometry
   actionlib_msgs
-  actionlib
-  rostest
-)
+  message_generation)
 
-#Look for OpenCV
-find_package(OpenCV REQUIRED)
-
-#Look for Boost
 find_package(Boost REQUIRED COMPONENTS signals system thread)
+find_package(OpenCV)
 
-## Generate actions in the 'action' folder
-add_action_files(
-   DIRECTORY    action
-   FILES   FaceDetector.action
-)
-
-## Generate added messages and services with any dependencies listed here
-generate_messages(
-   DEPENDENCIES 
-   actionlib_msgs
-   people_msgs   
-)
-
-## Specify additional locations of header files
 include_directories(
-  include ${catkin_INCLUDE_DIRS}
-)
+  include
+  ${Boost_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
+  ${catkin_INCLUDE_DIRS})
 
-## Declare a cpp executable
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
+set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+
+add_action_files(
+  DIRECTORY action
+  FILES FaceDetector.action
+)
+generate_messages(DEPENDENCIES actionlib_msgs people_msgs)
+
 add_executable(face_detector
-               src/face_detection.cpp 
-               src/faces.cpp
+                       src/face_detection.cpp 
+                       src/faces.cpp)
+target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  ${OpenCV_LIBRARIES})
+
+add_dependencies(face_detector ${PROJECT_NAME}_generate_messages_cpp)
+
+catkin_package(INCLUDE_DIRS include
+  CATKIN_DEPENDS people_msgs geometry_msgs message_runtime)
+
+install(TARGETS
+  face_detector
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-## Add cmake target dependencies of the executable/library
-add_dependencies(face_detector 
-                 face_detector_generate_messages_cpp people_msgs_generate_messages_cpp)
-
-## Specify libraries to link a library or executable target against
-target_link_libraries(face_detector ${catkin_LIBRARIES} ${OpenCV_LIBS} ${Boost_LIBRARIES})
-
-#############
-## Testing ##
-#############
-
-## Download test data (call "$make tests" in catkin build dir)
-catkin_download_test_data(
-face_detector_noface_test_diamondback.bag
-http://pr.willowgarage.com/data/face_detector/face_detector_noface_test_diamondback.bag
-DESTINATION ${PROJECT_SOURCE_DIR}/test
-MD5 37f043be780a4511c853379defdd9855
+install(DIRECTORY include/face_detector/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
 
-## Download test data
-catkin_download_test_data(
-face_detector_withface_test_diamondback.bag
-http://pr.willowgarage.com/data/face_detector/face_detector_withface_test_diamondback.bag
-DESTINATION ${PROJECT_SOURCE_DIR}/test
-MD5 59126117e049e69d577b7ee27251a6f8)
+install(DIRECTORY launch
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/
+)
 
-## Add rostests (call "$make test" in package dir in catkin build space)
-add_rostest(test/face_detector_true_rtest.xml)
-add_rostest(test/face_detector_false_rtest.xml)
+# if(CATKIN_ENABLE_TESTING)
+#   find_package(rostest REQUIRED)
+
+#   catkin_download_test_data(${PROJECT_NAME}_face_detector_noface_test_diamondback.bag
+#     http://download.ros.org/data/face_detector/face_detector_noface_test_diamondback.bag
+#     DESTINATION ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/test
+#     MD5 37f043be780a4511c853379defdd9855)
+#   catkin_download_test_data(${PROJECT_NAME}_ace_detector_withface_test_diamondback.bag
+#     http://download.ros.org/data/face_detector/face_detector_withface_test_diamondback.bag
+#     DESTINATION ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/test
+#     MD5 59126117e049e69d577b7ee27251a6f8)
+
+#   add_rostest(test/face_detector_true_rtest.xml)
+#   add_rostest(test/face_detector_false_rtest.xml)
+# endif()
