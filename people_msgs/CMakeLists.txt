@@ -16,6 +16,7 @@ add_message_files(
    PersonStamped.msg
    PositionMeasurement.msg
    PositionMeasurementArray.msg
+   PeoplePrediction.msg
 )
 
 ## Generate added messages and services with any dependencies listed here
