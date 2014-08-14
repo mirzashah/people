@@ -1,3 +1,5 @@
 leg_detector/cfg/cpp
 people_msgs/src/
 people_velocity_tracker/src/people_velocity_tracker/
+*~
+*.user
