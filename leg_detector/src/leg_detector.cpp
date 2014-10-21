@@ -690,7 +690,7 @@ public:
     ScanProcessor processor(*scan, mask_);
 
     processor.splitConnected(connected_thresh_);
-    processor.removeLessThan(5);
+    processor.removeLessThan(min_points_per_group);
 
     CvMat* tmp_mat = cvCreateMat(1,feat_count_,CV_32FC1);
 
@@ -759,8 +759,6 @@ public:
       m.color.a = 1;
       m.color.r = 1;
 
-      markers_pub_.publish(m);
-
       visualization_msgs::Marker t;
       t.header.stamp = scan->header.stamp;
       t.header.frame_id = fixed_frame;
@@ -782,7 +780,7 @@ public:
 
       //check if candidate is within certain distance of people measurement. if
       //it is, enlarge probability
-      double min_distance = 2 * leg_pair_separation_m;
+      double min_distance = leg_pair_separation_m;
 
       vector<people_msgs::PositionMeasurement>::iterator people_it;
 
@@ -821,14 +819,18 @@ public:
         {
 //          t.color.g = 1;
 //          t.color.r = 0;
+          m.color.g = 1;
+          m.color.r = 0;
           ROS_INFO("updated leg probability value");
-          if(probability < leg_reliability_limit_)
-            probability = leg_reliability_limit_;
+          probability = 1.0;
+//          if(probability < leg_reliability_limit_)
+//            probability = leg_reliability_limit_;
           break;
         }
-
-        markers_pub_.publish(t);
       }
+
+      markers_pub_.publish(t);
+      markers_pub_.publish(m);
 
       list<SavedFeature*>::iterator closest = propagated.end();
       float closest_dist = max_track_jump_m;
@@ -848,7 +850,13 @@ public:
       // Nothing close to it, start a new track
       if (closest == propagated.end())
       {
-        list<SavedFeature*>::iterator new_saved = saved_features_.insert(saved_features_.end(), new SavedFeature(loca, tfl_));
+        SavedFeature* new_feature = new SavedFeature(loca, tfl_);
+//        if(probability == 1.0)
+//        {
+//          ROS_INFO("setting object ID seed");
+//          new_feature->object_id = "seed";
+//        }
+        saved_features_.insert(saved_features_.end(), new_feature);
       }
       // Add the candidate, the tracker and the distance to a match list
       else
@@ -877,6 +885,8 @@ public:
 
           // Update the tracker with the candidate location
           matched_iter->closest_->update(loc, matched_iter->probability_);
+          if(matched_iter->probability_ == 1.0 && matched_iter->closest_->object_id == "")
+            matched_iter->closest_->object_id = "seed";
 
           // remove this match and
           matches.erase(matched_iter);
@@ -895,7 +905,8 @@ public:
       // try to assign the candidate to another tracker
       if (!found)
       {
-        Stamped<Point> loc(matched_iter->candidate_->center(), scan->header.stamp, scan->header.frame_id);
+        Stamped<Point> loc(matched_iter->candidate_->center(), scan->header.stamp,
+                           scan->header.frame_id);
         try {
           tfl_.transformPoint(fixed_frame, loc, loc);
         } catch(...) {
