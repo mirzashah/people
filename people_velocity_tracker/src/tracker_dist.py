@@ -114,6 +114,7 @@ class VelocityTracker:
 
             ppl_pos = self.listener.transformPoint(self.fixed_frame, ppl_pos)
             pm.header = ppl_pos.header
+            pm.header.stamp = rospy.Time.now()
             pm.pos = ppl_pos.point
             pm.pos.z = 0.0
 
@@ -142,9 +143,9 @@ class VelocityTracker:
             now = rospy.Time.now()
             for p in self.people:
                 if now - p.age() > self.TIMEOUT:
-                    pass
-                    #print 'removing old tracker', p.pos.object_id
-                    #self.people.remove(p)
+                    #pass
+                    print 'removing old tracker', p.pos.object_id
+                    self.people.remove(p)
             self.publish()
             rate.sleep()
 
