@@ -53,6 +53,7 @@ add_library(people_tracking_filter
 add_executable(people_tracker src/people_tracking_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
+add_dependencies(people_tracking_filter people_msgs_gencpp)
 add_dependencies(people_tracker people_msgs_gencpp people_tracking_filter)
 
 ## Specify libraries to link a library or executable target against
