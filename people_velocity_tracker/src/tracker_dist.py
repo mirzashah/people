@@ -40,19 +40,18 @@ class PersonEstimate:
     def __init__(self, msg):
         self.pos = msg
         self.reliability = 0.1
+        self.max_update_vel = 1.0
         self.k = Kalman()
 
     def update(self, msg):
-        last = self.pos
-        self.pos = msg
-        self.reliability = max(self.reliability, msg.reliability)
-
-        ivel = subtract(self.pos.pos, last.pos)
-        time = (self.pos.header.stamp - last.header.stamp).to_sec()
-        if time != 0:
-           scale(ivel, 1.0/time)
-            
-           self.k.update([ivel.x, ivel.y, ivel.z])
+        ivel = subtract(msg.pos, self.pos.pos)
+        time = (msg.header.stamp - self.pos.header.stamp).to_sec()
+        scale(ivel, 1.0/time)
+        if time != 0 and abs(ivel.x) < self.max_update_vel and abs(ivel.y) < self.max_update_vel and abs(ivel.z) < self.max_update_vel:
+            last = self.pos
+            self.pos = msg
+            self.reliability = max(self.reliability, msg.reliability)
+            self.k.update([ivel.x, ivel.y, ivel.z]) 
 
     def age(self):
         return self.pos.header.stamp
