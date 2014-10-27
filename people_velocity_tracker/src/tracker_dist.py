@@ -41,17 +41,22 @@ class PersonEstimate:
         self.pos = msg
         self.reliability = 0.1
         self.max_update_vel = 1.0
+        self.min_timestep = rospy.Duration(0.1)
         self.k = Kalman()
 
     def update(self, msg):
         ivel = subtract(msg.pos, self.pos.pos)
-        time = (msg.header.stamp - self.pos.header.stamp).to_sec()
-        scale(ivel, 1.0/time)
-        if time != 0 and abs(ivel.x) < self.max_update_vel and abs(ivel.y) < self.max_update_vel and abs(ivel.z) < self.max_update_vel:
+        time = msg.header.stamp - self.pos.header.stamp
+        time_sec = time.to_sec()
+        scale(ivel, 1.0/time_sec)
+        if time > self.min_timestep and abs(ivel.x) < self.max_update_vel and abs(ivel.y) < self.max_update_vel and abs(ivel.z) < self.max_update_vel:
+            print "updating velocity tracker"
             last = self.pos
             self.pos = msg
             self.reliability = max(self.reliability, msg.reliability)
             self.k.update([ivel.x, ivel.y, ivel.z]) 
+        else:
+            print "skipping position update"
 
     def age(self):
         return self.pos.header.stamp
