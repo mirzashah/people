@@ -39,7 +39,7 @@ class PersonEstimate:
     def __init__(self, msg):
         self.pos = msg
         self.reliability = 0.1
-        self.k = Kalman()
+        self.k = Kalman(0.02, 0.100, 0.01)
 
     def update(self, msg):
         last = self.pos
@@ -93,11 +93,12 @@ class VelocityTracker:
 
     def pm_cb(self, msg):
         for pm in msg.people:
-            if pm.object_id in self.people:
-                self.people[pm.object_id].update(pm)
-            else:
-                p = PersonEstimate(pm)
-                self.people[pm.object_id] = p
+            if pm.object_id:
+                if pm.object_id in self.people:
+                    self.people[pm.object_id].update(pm)
+                else:
+                    p = PersonEstimate(pm)
+                    self.people[pm.object_id] = p
 
     def spin(self):
         rate = rospy.Rate(10)
