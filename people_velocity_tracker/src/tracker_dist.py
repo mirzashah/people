@@ -42,7 +42,7 @@ class PersonEstimate:
         self.reliability = 0.1
         self.max_update_vel = 1.0
         self.min_timestep = rospy.Duration(0.1)
-        self.k = Kalman()
+        self.k = Kalman(0.0002, 10.0, 0.1)
 
     def update(self, msg):
         ivel = subtract(msg.pos, self.pos.pos)
@@ -124,21 +124,26 @@ class VelocityTracker:
 
             closest_dist = self.tracker_distance_th
             for person in self.people:
-		dist = distance(pm.pos, person.pos.pos)
-                print 'tracker:', person.pos.object_id, 'person_id:', pm.object_id, 'distance:', dist
-                if dist < closest_dist:
-                    closest = person
-                    closest_dist = dist
-            if closest_dist < self.tracker_distance_th:
-                print 'updating tracker', closest.pos.object_id
-                closest.update(pm)
-            else:
-                if not pm.object_id:
-                    pm.object_id = 'person' + repr(self.count)
-                    self.count = self.count + 1
-                print 'starting new tracker with name', pm.object_id
-                p = PersonEstimate(pm)
-                self.people.append(p) 
+                if pm.object_id:
+                    print "object_id not empty"
+		    dist = distance(pm.pos, person.pos.pos)
+                    print 'tracker:', person.pos.object_id, 'person_id:', pm.object_id, 'distance:', dist
+                    if dist < closest_dist:
+                        closest = person
+                        closest_dist = dist
+                    if closest_dist < self.tracker_distance_th:
+                        print 'updating tracker', closest.pos.object_id
+                        closest.update(pm)
+                    else:
+                        if not pm.object_id:
+                            pm.object_id = 'person' + repr(self.count)
+                            self.count = self.count + 1
+                        print 'starting new tracker with name', pm.object_id
+                        p = PersonEstimate(pm)
+                        self.people.append(p)
+                else:
+                    print "object_id empty"
+                     
 
     def spin(self):
         rate = rospy.Rate(10)
