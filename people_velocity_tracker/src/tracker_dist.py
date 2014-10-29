@@ -41,22 +41,17 @@ class PersonEstimate:
         self.pos = msg
         self.reliability = 0.1
         self.max_update_vel = 1.0
-        self.min_timestep = rospy.Duration(0.1)
-        self.k = Kalman(0.0002, 10.0, 0.1)
+        self.k = Kalman()
 
     def update(self, msg):
         ivel = subtract(msg.pos, self.pos.pos)
-        time = msg.header.stamp - self.pos.header.stamp
-        time_sec = time.to_sec()
-        scale(ivel, 1.0/time_sec)
-        if time > self.min_timestep and abs(ivel.x) < self.max_update_vel and abs(ivel.y) < self.max_update_vel and abs(ivel.z) < self.max_update_vel:
-            print "updating velocity tracker"
+        time = (msg.header.stamp - self.pos.header.stamp).to_sec()
+        scale(ivel, 1.0/time)
+        if time != 0 and abs(ivel.x) < self.max_update_vel and abs(ivel.y) < self.max_update_vel and abs(ivel.z) < self.max_update_vel:
             last = self.pos
             self.pos = msg
             self.reliability = max(self.reliability, msg.reliability)
             self.k.update([ivel.x, ivel.y, ivel.z]) 
-        else:
-            print "skipping position update"
 
     def age(self):
         return self.pos.header.stamp
@@ -124,26 +119,21 @@ class VelocityTracker:
 
             closest_dist = self.tracker_distance_th
             for person in self.people:
-                if pm.object_id:
-                    print "object_id not empty"
-		    dist = distance(pm.pos, person.pos.pos)
-                    print 'tracker:', person.pos.object_id, 'person_id:', pm.object_id, 'distance:', dist
-                    if dist < closest_dist:
-                        closest = person
-                        closest_dist = dist
-                    if closest_dist < self.tracker_distance_th:
-                        print 'updating tracker', closest.pos.object_id
-                        closest.update(pm)
-                    else:
-                        if not pm.object_id:
-                            pm.object_id = 'person' + repr(self.count)
-                            self.count = self.count + 1
-                        print 'starting new tracker with name', pm.object_id
-                        p = PersonEstimate(pm)
-                        self.people.append(p)
-                else:
-                    print "object_id empty"
-                     
+		dist = distance(pm.pos, person.pos.pos)
+                print 'tracker:', person.pos.object_id, 'person_id:', pm.object_id, 'distance:', dist
+                if dist < closest_dist:
+                    closest = person
+                    closest_dist = dist
+            if closest_dist < self.tracker_distance_th:
+                print 'updating tracker', closest.pos.object_id
+                closest.update(pm)
+            else:
+                if not pm.object_id:
+                    pm.object_id = 'person' + repr(self.count)
+                    self.count = self.count + 1
+                print 'starting new tracker with name', pm.object_id
+                p = PersonEstimate(pm)
+                self.people.append(p) 
 
     def spin(self):
         rate = rospy.Rate(10)
