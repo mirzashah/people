@@ -33,6 +33,9 @@ find_package(catkin REQUIRED COMPONENTS
 generate_dynamic_reconfigure_options(
   cfg/LegDetector.cfg
 )
+catkin_package(INCLUDE_DIRS include
+  CATKIN_DEPENDS roscpp std_msgs geometry_msgs std_srvs sensor_msgs laser_geometry tf visualization_msgs people_msgs people_tracking_filter image_geometry dynamic_reconfigure)
+
 
 ## Specify additional locations of header files
 include_directories(
@@ -52,3 +55,17 @@ add_dependencies(leg_detector people_msgs_gencpp ${${PROJECT_NAME}_EXPORTED_TARG
 target_link_libraries(leg_detector
    ${catkin_LIBRARIES} ${BFL_LIBRARIES} ${BULLET_LIBRARIES}
 )
+
+install(TARGETS
+  leg_detector
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(DIRECTORY include/leg_detector/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
+
+install(DIRECTORY launch
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
